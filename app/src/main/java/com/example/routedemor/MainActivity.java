@@ -174,10 +174,10 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     private String getUrl(double latitude, double longitude, String nearByPlace)
     {
         StringBuilder placeuUrl = new StringBuilder("https://maps.googleapis.com/maps/api/place/textsearch/json?");
-        placeuUrl.append("location =" + latitude + "," + longitude);
-        placeuUrl.append("&radius =" + radius);
-        placeuUrl.append("&type =" + nearByPlace);
-        placeuUrl.append("&key =" + getString(R.string.api_key));
+        placeuUrl.append("location=" + latitude + "," + longitude);
+        placeuUrl.append("&radius=" + radius);
+        placeuUrl.append("&type=" + nearByPlace);
+        placeuUrl.append("&key=" + getString(R.string.api_key));
         return placeuUrl.toString();
     }
 }
