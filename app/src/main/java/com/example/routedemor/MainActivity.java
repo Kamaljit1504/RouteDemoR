@@ -1,16 +1,24 @@
 package com.example.routedemor;
 
 
+import androidx.annotation.DrawableRes;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
 
 import android.Manifest;
+import android.content.Context;
 import android.content.pm.PackageManager;
+import android.graphics.Bitmap;
+import android.graphics.Canvas;
+import android.graphics.drawable.Drawable;
 import android.location.Location;
 import android.location.LocationManager;
 import android.os.Bundle;
 import android.os.Looper;
+import android.view.View;
+import android.widget.Toast;
 
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationCallback;
@@ -21,10 +29,13 @@ import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
+import com.google.android.gms.maps.model.BitmapDescriptor;
 import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.CameraPosition;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.MarkerOptions;
+
+import java.util.Objects;
 
 public class MainActivity extends AppCompatActivity implements OnMapReadyCallback {
 
@@ -35,6 +46,11 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     private FusedLocationProviderClient fusedLocationProviderClient;
     LocationCallback locationCallback;
     LocationRequest locationRequest;
+
+    //latitude, longitude
+    double latitude;
+    double longitude;
+    final int radius = 1500;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -73,6 +89,9 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                 {
                     LatLng userLocation = new LatLng(location.getLatitude(), location.getLongitude());
 
+                    latitude = userLocation.latitude;
+                    longitude = userLocation.longitude;
+
                     CameraPosition cameraPosition = CameraPosition.builder()
                             .target(userLocation)
                             .zoom(15)
@@ -81,12 +100,24 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                             .build();
                     mMap.animateCamera(CameraUpdateFactory.newCameraPosition(cameraPosition));
                     mMap.addMarker(new MarkerOptions().position(userLocation)
-                            .title("Your Location"));
+                            .title("Your Location")
+                            .icon(bitmapDescriptorFromVector(getApplicationContext(), R.drawable.marker)));
 
                 }
             }
         };
     }
+
+    private BitmapDescriptor bitmapDescriptorFromVector(Context context, @DrawableRes int vectorDrawableResourceId)
+    {
+        Drawable vectorDrawable = ContextCompat.getDrawable(context,vectorDrawableResourceId);
+        vectorDrawable.setBounds(0,0,vectorDrawable.getIntrinsicWidth(), vectorDrawable.getIntrinsicHeight());
+        Bitmap bitmap = Bitmap.createBitmap(vectorDrawable.getIntrinsicWidth(), vectorDrawable.getIntrinsicHeight(), Bitmap.Config.ARGB_8888);
+        Canvas canvas = new Canvas(bitmap);
+        vectorDrawable.draw(canvas);
+        return BitmapDescriptorFactory.fromBitmap(bitmap);
+    }
+
 
     private boolean checkPermission()
     {
@@ -97,6 +128,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     private void requestPermission()
     {
         ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, Request_code);
+
     }
 
     @Override
@@ -117,5 +149,35 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         mMap = googleMap;
 
 
+    }
+
+    public  void btnClick(View view)
+    {
+        switch (view.getId())
+        {
+            case R.id.btn_restaurant:
+                //get the url from place api
+                String url = getUrl(latitude, longitude, "restaurant");
+                Object[] dataTransfer = new Object[2];
+                dataTransfer[0] = mMap;
+                dataTransfer[1] = url;
+                GetNearByPlacesData getNearByPlaceData = new GetNearByPlacesData();
+                getNearByPlaceData.execute(dataTransfer);
+                Toast.makeText(this,"Restaurants", Toast.LENGTH_SHORT).show();
+                break;
+
+
+        }
+
+    }
+
+    private String getUrl(double latitude, double longitude, String nearByPlace)
+    {
+        StringBuilder placeuUrl = new StringBuilder("https://maps.googleapis.com/maps/api/place/textsearch/json?");
+        placeuUrl.append("location =" + latitude + "," + longitude);
+        placeuUrl.append("&radius =" + radius);
+        placeuUrl.append("&type =" + nearByPlace);
+        placeuUrl.append("&key =" + getString(R.string.api_key));
+        return placeuUrl.toString();
     }
 }
