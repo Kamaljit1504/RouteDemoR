@@ -77,4 +77,85 @@ public class DataParser {
         return getPlaces(jsonArray);
     }
 
+
+    public HashMap<String ,String> parseDistance(String jsonData)
+    {
+
+
+        JSONArray jsonArray = null;
+        try {
+            JSONObject jsonObject = new JSONObject(jsonData);
+            jsonArray = jsonObject.getJSONArray("routes").getJSONObject(0).getJSONArray("legs");
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+
+
+        return getDuration(jsonArray);
+
+    }
+
+    private HashMap<String, String > getDuration(JSONArray directionJsonData)
+    {
+        HashMap<String, String> directionMap = new HashMap<>();
+        String duration = "";
+        String distance = "";
+        try {
+
+
+            duration = directionJsonData.getJSONObject(0).getJSONObject("duration").getString("text");
+            distance = directionJsonData.getJSONObject(0).getJSONObject("distance").getString("text");
+            directionMap.put("duration", duration);
+            directionMap.put("distance", distance);
+
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+
+        return directionMap;
+    }
+
+    public String[] parseDirections(String jsonData)
+    {
+        JSONArray jsonArray= null;
+        try
+        {
+            JSONObject jsonObject = new JSONObject(jsonData);
+            jsonArray = jsonObject.getJSONArray("routes").getJSONObject(0).getJSONArray("legs")
+            .getJSONObject(0).getJSONArray("steps");
+
+        }
+        catch (JSONException e) {
+            e.printStackTrace();
+        }
+      return getPaths(jsonArray);
+    }
+
+
+    private String[] getPaths(JSONArray jsonArray)
+    {
+        int count = jsonArray.length();
+        String[] polyLines = new String[count];
+
+        for(int i =0; i < count; i++)
+        {
+            try
+            {
+                polyLines[i]  = getPath(jsonArray.getJSONObject(i));
+            } catch (JSONException e) {
+                e.printStackTrace();
+            }
+        }
+        return polyLines;
+    }
+
+    private String getPath(JSONObject jsonObject) {
+        String polyLine = "";
+        try{
+            polyLine = jsonObject.getJSONObject("polyLine").getString("points");
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+        return polyLine;
+    }
 }

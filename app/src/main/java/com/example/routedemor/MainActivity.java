@@ -50,7 +50,11 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     //latitude, longitude
     double latitude;
     double longitude;
+    double dest_Lat, dest_lng;
     final int radius = 1500;
+
+    public static boolean directionRequested;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -148,17 +152,46 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     public void onMapReady(GoogleMap googleMap) {
         mMap = googleMap;
 
+        //mMap.setMapStyle(GoogleMap.MAP_TYPE_HYBRID);
+        mMap.setOnMapClickListener(new GoogleMap.OnMapClickListener() {
+            @Override
+            public void onMapClick(LatLng latLng) {
+                Location location = new Location("Your Destination");
+                location.setLatitude(latLng.latitude);
+                location.setLongitude(latLng.longitude);
+                dest_Lat = latLng.latitude;
+                dest_lng = latLng.longitude;
+                //set marker
+                setMarker(location);
 
+            }
+        });
+
+
+    }
+
+    public void setMarker(Location location)
+    {
+        LatLng userLatlng  = new LatLng(location.getLatitude(), location.getLongitude());
+        mMap.addMarker(new MarkerOptions().position(userLatlng)
+                .title("Your Destination")
+                .snippet("on the way")
+                .draggable(true)
+                 );
     }
 
     public  void btnClick(View view)
     {
+        Object[] dataTransfer;
+        String url;
+
         switch (view.getId())
         {
+
             case R.id.btn_restaurant:
                 //get the url from place api
-                String url = getUrl(latitude, longitude, "restaurant");
-                Object[] dataTransfer = new Object[2];
+                 url = getUrl(latitude, longitude, "restaurant");
+                dataTransfer = new Object[2];
                 dataTransfer[0] = mMap;
                 dataTransfer[1] = url;
                 GetNearByPlacesData getNearByPlaceData = new GetNearByPlacesData();
@@ -166,8 +199,42 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                 Toast.makeText(this,"Restaurants", Toast.LENGTH_SHORT).show();
                 break;
 
+            case R.id.btn_distance:
+            {
+                url = getDirectionURL();
+                dataTransfer = new Object[3];
+                dataTransfer[0] = mMap;
+                //dataTransfer[1] = url;
+                dataTransfer[2] = new LatLng(dest_Lat, dest_lng);
+
+                GetDirectionData getDirectionData = new GetDirectionData();
+                //Exceute ASYN
+                Toast.makeText(this,"Restaurants", Toast.LENGTH_SHORT).show();
+                getDirectionData.execute(dataTransfer);
+
+                if (view.getId() == R.id.btn_direction)
+                {
+                    directionRequested = true;
+                }
+                else {
+                    directionRequested = false;
+                }
+
+                break;
+
+            }
+
 
         }
+
+    }
+    private String getDirectionURL()
+    {
+        StringBuilder directionUrl = new StringBuilder("https://maps.googleapis.com/maps/api/directions/json?=AIzaSyDK2Du7rvxW4d4NQmKg8qAyxaZ0dGgaY5");
+        directionUrl.append("origin="+ latitude +","+ longitude);
+        directionUrl.append("&destination=" + dest_Lat +  "," + dest_lng);
+        directionUrl.append("&key" + getString(R.string.api_key));
+        return directionUrl.toString();
 
     }
 
@@ -178,6 +245,8 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         placeuUrl.append("&radius=" + radius);
         placeuUrl.append("&type=" + nearByPlace);
         placeuUrl.append("&key=" + getString(R.string.api_key));
+
+
         return placeuUrl.toString();
     }
 }
